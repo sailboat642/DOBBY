@@ -3,18 +3,23 @@ import sqlite
 MALE = 1
 FEMALE = 0
 
-def create_database(filename):
-	filename = "./databases/" + name + ".db"
-	try:
-    	conn = sqlite3.connect(filename)
-        print(sqlite3.version)
-    except Error as e:
-        print(e)
-    finally:
-        conn.close()
+
+def login_required(f):
+    """
+    Decorate routes to require login.
+
+    http://flask.pocoo.org/docs/1.0/patterns/viewdecorators/
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get("user_id") is None:
+            return redirect("/login")
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 def upload_database(filename):
-	
+'''csv into .db file'''	
 
 def genderSplit():			# take database as input?
 '''splits the committees in an optimal gender ratio'''
@@ -30,6 +35,8 @@ def genderSplit():			# take database as input?
 		ranks = (int) cur.execute("SELECT COUNT(DISTINCT rank) FROM ?", committee)[0]
 		splitCommitteByGender(ranks, committee, ratio)
 
+
+
 def splitCommitteByGender(ranks, committee, ratio)
 '''splits the committees in an optimal gender ratio'''
 
@@ -44,6 +51,20 @@ def splitCommitteByGender(ranks, committee, ratio)
 				portfoliosWithRankCount--
 			else:
 				cur.execute("UPDATE ? SET gender = 0 WHERE portfolio = ?", committe, j["portfolio"])
+
+def create_connection(db_file):
+    """ create a database connection to the SQLite database
+        specified by db_file
+    :param db_file: database file
+    :return: Connection object or None
+    """
+    try:
+        conn = sqlite3.connect(db_file)
+        return conn
+    except Error as e:
+        print(e)
+ 
+    return None
 
 def schoolAssign():
 '''Gives schools portfolios in terms of rank/grade'''
