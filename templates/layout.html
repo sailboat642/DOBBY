@@ -17,6 +17,18 @@
 	<body>
 		<header class="header-ribbon">
 			<div class="logo"></div>
+			<nav class="nav">
+				{% if session %}
+				<ul class="navbar-nav mr-auto mt-2">
+					<li><a href="./logout">Log Out</a></li>
+				</ul>
+				{% else %}
+				<ul class="navbar-nav ml-auto mt-2">
+					<li><a href="./register">Register</a></li>
+					<li><a href="./login">Login</a></li>
+				</ul>
+				{% endif %}
+			</nav>
 		</header>
 		<div id="body" class="container">
 			{% block body %}

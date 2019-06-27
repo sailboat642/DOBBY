@@ -1,14 +1,20 @@
 {% extends layout %}
 
+{% block title %}
+	Title
+{% endblock %}
+
 {% block body %}
 <div id="login" class="page-center">
 	<img src="####" alt="logo">
-	<div class="login">
-		<form action="">
-			<input type="text" name="username" placeholder="Username">
-			<input type="password" name="password" placeholder="Password">
-			<input type="button" value="submit">
-		</form>
-	</div>
+	<form action="/login" method="post">
+        <div class="form-group">
+            <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text">
+        </div>
+        <div class="form-group">
+            <input class="form-control" name="password" placeholder="Password" type="password">
+        </div>
+        <button class="btn btn-primary" type="submit">Log In</button>
+    </form>
 </div>
 {% end block %}
