@@ -10,8 +10,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 
 
-from sqlalchemy_declarative import User, Events, Base
-from helpers import login_required, apology
+from sqlalchemy_declarative import User, Event, Base
+from helpers import login_required, apology, database_access
 
 
 
@@ -35,7 +35,8 @@ def after_request(response):
     return response
 
 @app.route('/')
-def reroute():
+@database_access
+def home():
     return redirect("/login")
 
 
@@ -91,18 +92,28 @@ def register():
     else:
         return render_template("register.html")
 
-# remember to close all connections to databases
-@app.route("/<database>/")
+@app.route("/select_event", methods=["POST", "GET"])
 @login_required
-def home():
-    return render_template("login.html")
+def select_event():
+    sqlSession = AppSession()
+    if request.method == "POST":
+        event = request.form.get("event")
+        file_key = request.form.get("key")
 
-@app.route("/<database>/sort")
-@login_required
-def menu():
-# if database is False or not isRightPassword():
-#   redirect(url_for(home))
-    return 300
+        if not event or not key:
+            return apology("Must provide all fields")
+
+        if not check_password_hash(event.hash, file_key):
+            return apology("Invalid Key")
+
+
+        session["event_id"] = event.id
+
+        return redirect("/")
+
+    else:
+        events = sqlSession.query(Event).all()
+        return render_template("file-select.html", events = events)
 
 
 @app.route("/create")
