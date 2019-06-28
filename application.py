@@ -1,5 +1,5 @@
 import os
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
 
 from flask import Flask, flash, jsonify, redirect, render_template, request, session
@@ -10,7 +10,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 
 
-from sqlalchemy_declarative import User, Event, Base
+from sqlalchemy_declarative import User, Event, Base, School, Student, Portfolio, Committee
 from helpers import login_required, apology, database_access
 
 
@@ -23,8 +23,15 @@ app = Flask(__name__)
 app.secret_key = os.urandom(642)
 # sqlalchemy for dobby.db
 # engine for database
-dobb_engine = create_engine("sqlite:///dobby.db")
+dobb_engine = create_engine("sqlite:///dobby.db", echo=True, connect_args={'check_same_thread':False})
 AppSession = sessionmaker(bind=dobb_engine)
+dobb_metadata = MetaData(bind = dobb_engine)
+
+# sqlalchemy for 'event'.db
+engine = create_engine("sqlite:///databases/trial.db", echo=True, connect_args={'check_same_thread':False})
+EventSession = sessionmaker(bind=engine)
+event_metadata = MetaData(bind=engine)
+
 
 # Ensure responses aren't cached
 @app.after_request
@@ -35,9 +42,9 @@ def after_request(response):
     return response
 
 @app.route('/')
-@database_access
+@login_required
 def home():
-    return redirect("/login")
+    return render_template("index.html")
 
 
 @app.route("/login", methods=["POST", "GET"])
@@ -59,7 +66,7 @@ def login():
         session["user_id"] = user.id
         session["user"] = user.username
 
-        return redirect("/select_event")
+        return redirect("/")
 
     else:
         return render_template("login.html")
@@ -92,10 +99,61 @@ def register():
     else:
         return render_template("register.html")
 
+@app.route("/add_school", methods=["POST", "GET"])
+@login_required
+def add_school():
+    event_session = EventSession()
+    if request.method == "POST":
+        school_name = request.form.get("school_name")
+        student_names = request.form.get("student_names").split(", ")
+
+        school = School(name = school_name)
+
+        if event_session.query(School).filter(School.name == school.name).one() is None:
+            event_session.add(school)
+            event_session.commit()
+        else:
+            school = event_session.query(School).filter(School.name == school.name).one()
+
+        for name in student_names:
+            student = Student(name = name, school_id = school.id)
+            event_session.add(student)
+
+        event_session.commit()
+        return redirect("/")
+
+    else:
+        return render_template("add_school.html")
+
+@app.route("/add_committee", methods=["POST", "GET"])
+@login_required
+def add_committee():
+    event_session = EventSession()
+    if request.method == "POST":
+        committee_name = request.form.get("committee_name")
+        portfolios_names = request.form.get("portfolio_names").split(", ")
+
+        committee = Committee(name = committee_name)
+        if event_session.query(Committee).filter(Committee.name == committee.name).one() is None:
+            event_session.add(committee)
+            event_session.commit()
+        else:
+            committee = event_session.query(Committee).filter(Committee.name == committee.name).one()
+
+        for name in portfolios_names:
+            portfolio = Portfolio(name = name, committee_id = committee.id)
+            event_session.add(portfolio)
+
+        event_session.commit()
+        return redirect("/")
+
+    else:
+        return render_template("add_committee.html")
+
 @app.route("/select_event", methods=["POST", "GET"])
 @login_required
 def select_event():
-    sqlSession = AppSession()
+    app_session = AppSession()
     if request.method == "POST":
         event = request.form.get("event")
         file_key = request.form.get("key")
@@ -106,13 +164,20 @@ def select_event():
         if not check_password_hash(event.hash, file_key):
             return apology("Invalid Key")
 
+        print('I am here')
+        # request for event's database name and bind all variables to it
+        # create new database for event
+        engine = create_engine('sqlite:///databases/'+filename, connect_args={'check_same_thread': False}, echo=True)
+        # configure global variables
+        EventSession.configure(bind=engine)
+        event_metadata.bind = engine
 
         session["event_id"] = event.id
 
         return redirect("/")
 
     else:
-        events = sqlSession.query(Event).all()
+        events = app_session.query(Event).all()
         return render_template("file-select.html", events = events)
 
 
@@ -120,4 +185,39 @@ def select_event():
 @login_required
 def create_database():
     '''new database'''
-    return 300
+    if request.method == "POST":
+        # get input from form
+        event_name = request.form.get("event_name")
+        key = request.form.get("key")
+
+        if not event_name or not key:
+            return apology("Event or key not given")
+
+        filename = event_name.replace(" ", "_") + '.db'
+        print(filename)
+        # create connection to dobby.db
+        app_session = AppSession()
+        print('I am here')
+        # insert new event into dobby.db
+        event = Event(name = event_name, hash = generate_password_hash(password, "pbkdf2:sha256"), filename = filename)
+        app_session.add(event)
+        app_session.commit()
+
+        # create new database for event
+        engine = create_engine('sqlite:///databases/'+filename, echo=True, connect_args={'check_same_thread': False})
+        # configure global variables
+        EventSession.configure(bind=engine)
+        event_metadata.bind = engine
+
+        event_session = EventSession()
+
+        # finally create tables for events
+        event_metadata.create_all([Committee, Portfolio, School, Student])
+
+        # remember database id
+        session["event_id"] = event.id
+
+        return redirect("/")
+
+    else:
+        return render_template("new_event.html")

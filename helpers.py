@@ -30,6 +30,9 @@ def database_access(f):
     """
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        if session.get("user_id") is None:
+            return redirect("/login")
+
         if session.get("event_id") is None:
             return redirect("/select_event")
         return f(*args, **kwargs)
