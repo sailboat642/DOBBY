@@ -5,12 +5,12 @@
 {% endblock %}
 
 {% block body %}
-<form action="/select_event" method="get">
+<form action="/select_event" method="post">
 	<div>
-	    <select class="form-control" name="file">
+	    <select class="form-control" name="name">
 	    	<option disabled="" value ="" selected="">Event Name</option>
 		    {% for event in events %}
-		    <option value="{{ event }}">{{ event.name}}</option>
+		    <option value="{{ event.name }}">{{ event.name }}</option>
 		    {% endfor %}
 	    </select>
     	<input class="form-control" type="password" name="key">

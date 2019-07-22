@@ -29,9 +29,8 @@ AppSession = sessionmaker(bind=dobb_engine)
 dobb_metadata = MetaData(bind = dobb_engine)
 
 # sqlalchemy for 'event'.db
-engine = create_engine("sqlite:///databases/trial.db", echo=True, connect_args={'check_same_thread':False})
-EventSession = sessionmaker(bind=engine)
-event_metadata = MetaData(bind=engine)
+EventSession = sessionmaker()
+event_metadata = MetaData()
 
 
 # Ensure responses aren't cached
@@ -43,7 +42,7 @@ def after_request(response):
     return response
 
 @app.route('/')
-@login_required
+@database_access
 def home():
     return render_template("index.html")
 
@@ -101,7 +100,7 @@ def register():
         return render_template("register.html")
 
 @app.route("/add_school", methods=["POST", "GET"])
-@login_required
+@database_access
 def add_school():
     event_session = EventSession()
     if request.method == "POST":
@@ -127,7 +126,7 @@ def add_school():
         return render_template("add_school.html")
 
 @app.route("/add_committee", methods=["POST", "GET"])
-@login_required
+@database_access
 def add_committee():
     event_session = EventSession()
     if request.method == "POST":
@@ -156,22 +155,27 @@ def add_committee():
 def select_event():
     app_session = AppSession()
     if request.method == "POST":
-        event = request.form.get("event")
+        app_session = AppSession()
+        name = request.form.get("name")
         file_key = request.form.get("key")
 
-        if not event or not key:
+
+        if not name or not file_key:
             return apology("Must provide all fields")
+
+        event = app_session.query(Event).filter(Event.name == name).first()
+
+        if event is None:
+            return apology("could not find event")
 
         if not check_password_hash(event.hash, file_key):
             return apology("Invalid Key")
 
-        print('I am here')
         # request for event's database name and bind all variables to it
         # create new database for event
-        engine = create_engine('sqlite:///databases/'+filename, connect_args={'check_same_thread': False}, echo=True)
+        engine = create_engine('sqlite:///databases/'+event.filename, connect_args={'check_same_thread': False}, echo=True)
         # configure global variables
         EventSession.configure(bind=engine)
-        event_metadata.bind = engine
 
         session["event_id"] = event.id
 
@@ -199,7 +203,6 @@ def create_database():
             return apology("confirmation does not match")
 
         filename = event_name.replace(" ", "_") + '.db'
-        print(filename)
         # create connection to dobby.db
         app_session = AppSession()
 
@@ -211,21 +214,25 @@ def create_database():
         engine = create_engine(f"sqlite:///databases/{filename}", echo=True, connect_args={'check_same_thread': False})
         # configure global variables
         EventSession.configure(bind=engine)
-        event_metadata.bind = engine
-
-        event_session = EventSession()
 
         # finally create tables for events
-        event_metadata.create_all()
+        Base.metadata.create_all(engine)
+
         app_session.commit()
 
         # remember database id
         session["event_id"] = event.id
 
-        return redirect("select_event")
+        return redirect("/")
 
     else:
         return render_template("new_event.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
 
 
 # @app.route("/sort")
