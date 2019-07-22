@@ -1,6 +1,7 @@
 import os
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.sql.expression import func
 
 from flask import Flask, flash, jsonify, redirect, render_template, request, session
 from tempfile import mkdtemp
@@ -10,7 +11,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 
 
-from sqlalchemy_declarative import User, Event, Base, School, Student, Portfolio, Committee
+from sqlalchemy_declarative import User, Event, Base, School, Student, Portfolio, Committee, AppBase
 from helpers import login_required, apology, database_access
 
 
@@ -66,7 +67,7 @@ def login():
         session["user_id"] = user.id
         session["user"] = user.username
 
-        return redirect("/")
+        return redirect("/select_event")
 
     else:
         return render_template("login.html")
@@ -109,11 +110,11 @@ def add_school():
 
         school = School(name = school_name)
 
-        if event_session.query(School).filter(School.name == school.name).one() is None:
+        if event_session.query(School).filter(School.name == school.name).first() is None:
             event_session.add(school)
             event_session.commit()
         else:
-            school = event_session.query(School).filter(School.name == school.name).one()
+            school = event_session.query(School).filter(School.name == school.name).first()
 
         for name in student_names:
             student = Student(name = name, school_id = school.id)
@@ -134,11 +135,11 @@ def add_committee():
         portfolios_names = request.form.get("portfolio_names").split(", ")
 
         committee = Committee(name = committee_name)
-        if event_session.query(Committee).filter(Committee.name == committee.name).one() is None:
+        if event_session.query(Committee).filter(Committee.name == committee.name).first() is None:
             event_session.add(committee)
             event_session.commit()
         else:
-            committee = event_session.query(Committee).filter(Committee.name == committee.name).one()
+            committee = event_session.query(Committee).filter(Committee.name == committee.name).first()
 
         for name in portfolios_names:
             portfolio = Portfolio(name = name, committee_id = committee.id)
@@ -181,7 +182,7 @@ def select_event():
         return render_template("file-select.html", events = events)
 
 
-@app.route("/create")
+@app.route("/create", methods=["GET", "POST"])
 @login_required
 def create_database():
     '''new database'''
@@ -189,22 +190,25 @@ def create_database():
         # get input from form
         event_name = request.form.get("event_name")
         key = request.form.get("key")
+        confirmation = request.form.get("confirmation")
 
         if not event_name or not key:
             return apology("Event or key not given")
+
+        if key != confirmation:
+            return apology("confirmation does not match")
 
         filename = event_name.replace(" ", "_") + '.db'
         print(filename)
         # create connection to dobby.db
         app_session = AppSession()
-        print('I am here')
+
         # insert new event into dobby.db
-        event = Event(name = event_name, hash = generate_password_hash(password, "pbkdf2:sha256"), filename = filename)
+        event = Event(name = event_name, hash = generate_password_hash(key, "pbkdf2:sha256"), filename = filename)
         app_session.add(event)
-        app_session.commit()
 
         # create new database for event
-        engine = create_engine('sqlite:///databases/'+filename, echo=True, connect_args={'check_same_thread': False})
+        engine = create_engine(f"sqlite:///databases/{filename}", echo=True, connect_args={'check_same_thread': False})
         # configure global variables
         EventSession.configure(bind=engine)
         event_metadata.bind = engine
@@ -212,12 +216,34 @@ def create_database():
         event_session = EventSession()
 
         # finally create tables for events
-        event_metadata.create_all([Committee, Portfolio, School, Student])
+        event_metadata.create_all()
+        app_session.commit()
 
         # remember database id
         session["event_id"] = event.id
 
-        return redirect("/")
+        return redirect("select_event")
 
     else:
         return render_template("new_event.html")
+
+
+# @app.route("/sort")
+# @login_required
+# def sort():
+#     event_session = EventSession()
+#     portfolios = event_session.query(Portfolio).order_by(func.random()).all()
+#     students = event_session.query(Student).order_by(func.random()).all()
+
+#     count = event_session.query(func.count(Student.id)).first()[0]
+
+#     for i in range(count):
+#         portfolios[i].student_id = students[i].id
+
+#     event_session.commit
+#     return redirect("/")
+
+
+
+
+

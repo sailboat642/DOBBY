@@ -3,22 +3,22 @@ import sys
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
-from sqlalchemy import create_engine
  
+AppBase = declarative_base()
 Base = declarative_base()
 
 #######################################
 #####       Tables in dobby.db    #####
 #######################################
 
-class User(Base):
+class User(AppBase):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True)
     username = Column(String(64), nullable=False, unique=True)
     hash = Column(String, nullable=False)
  
-class Event(Base):
+class Event(AppBase):
     __tablename__ = 'events'
 
     id = Column(Integer, primary_key=True)
