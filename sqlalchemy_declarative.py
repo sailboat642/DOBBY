@@ -38,7 +38,7 @@ class Committee(Base):
     
 
 class School(Base):
-    """Committee Table in 'event'.db"""
+    """School Table in 'event'.db"""
     __tablename__ = 'schools' 
 
     id = Column(Integer, primary_key=True)
@@ -47,7 +47,7 @@ class School(Base):
 
 
 class Student(Base):
-    """Portfolio table"""
+    """Student table"""
     __tablename__ = 'students'
 
     id = Column(Integer, primary_key=True)

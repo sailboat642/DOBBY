@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+
+{% block title %}
+View
+{% endblock %}
+
+{% block body %}
+<table>
+	{% for row in rows %}
+	<tr>
+		{% for element in row %}
+		<td>{{ element }}</td>
+		{% endfor %}
+	</tr>
+	{% endfor %}
+</table>
+{% endblock %}

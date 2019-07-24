@@ -17,16 +17,14 @@ from helpers import login_required, apology, database_access
 
 
 
-
-
-
 app = Flask(__name__)
 app.secret_key = os.urandom(642)
+
 # sqlalchemy for dobby.db
 # engine for database
 dobb_engine = create_engine("sqlite:///dobby.db", echo=True, connect_args={'check_same_thread':False})
 AppSession = sessionmaker(bind=dobb_engine)
-dobb_metadata = MetaData(bind = dobb_engine)
+dobb_metadata = MetaData(bind=dobb_engine)
 
 # sqlalchemy for 'event'.db
 EventSession = sessionmaker()
@@ -234,21 +232,30 @@ def logout():
     session.clear()
     return redirect("/")
 
+@app.route("/view")
+@database_access
+def view():
+    session = EventSession()
+    
+    rows = session.query(Student.id, Portfolio.name, Student.name, Committee.name).join(Student, Committee).order_by(Student.id).all()
+    return render_template("view.html", rows=rows)
 
-# @app.route("/sort")
-# @login_required
-# def sort():
-#     event_session = EventSession()
-#     portfolios = event_session.query(Portfolio).order_by(func.random()).all()
-#     students = event_session.query(Student).order_by(func.random()).all()
 
-#     count = event_session.query(func.count(Student.id)).first()[0]
+@app.route("/sort", methods=["POST", "GET"])
+@database_access
+def sort():
+    if request.method == "POST":
+        event_session = EventSession()
+        portfolios = event_session.query(Portfolio).order_by(func.random()).all()
+        students = event_session.query(Student).order_by(func.random()).all()
 
-#     for i in range(count):
-#         portfolios[i].student_id = students[i].id
+        count = event_session.query(func.count(Student.id)).first()[0]
 
-#     event_session.commit
-#     return redirect("/")
+        for i in range(count):
+            portfolios[i].student_id = students[i].id
+
+        event_session.commit()
+        return redirect("/")
 
 
 
