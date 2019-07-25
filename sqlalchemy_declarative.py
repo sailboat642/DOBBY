@@ -43,6 +43,7 @@ class School(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False, unique=True)
+    grade = Column(Integer)
 
 
 
@@ -65,6 +66,7 @@ class Portfolio(Base):
     committee_id = Column(Integer, ForeignKey("committees.id"), nullable=False)
     student_id = Column(Integer, ForeignKey("students.id"))
     school_id = Column(Integer, ForeignKey("schools.id"))
+    rank = Column(Integer)
 
     committee = relationship("Committee", back_populates="portfolios")
     student = relationship("Student", back_populates="portfolio")
