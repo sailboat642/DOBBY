@@ -24,7 +24,7 @@ def login_required(f):
 
 def database_access(f):
     """
-    Decorate routes to require login.
+    Decorate routes to require acces to database.
 
     http://flask.pocoo.org/docs/1.0/patterns/viewdecorators/
     """

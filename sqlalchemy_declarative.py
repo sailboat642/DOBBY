@@ -43,6 +43,7 @@ class School(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False, unique=True)
+    student_population = Column(Integer)
     grade = Column(Integer)
 
 
@@ -54,6 +55,7 @@ class Student(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False)
     school_id = Column(Integer, ForeignKey("schools.id"))
+    gender = Column(Integer, nullable=True) # 1 if male 0 if female
 
     school = relationship("School", back_populates="students")
 
@@ -78,7 +80,6 @@ Committee.portfolios = relationship("Portfolio", order_by=Portfolio.id, back_pop
 
 School.portfolios = relationship("Portfolio", order_by=Portfolio.id, back_populates="school")
 School.students = relationship("Student", order_by=Student.id, back_populates="school")
-
 
 Student.portfolio = relationship("Portfolio", back_populates="student")
 

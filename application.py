@@ -1,4 +1,5 @@
 import os
+import csv
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import func
@@ -30,6 +31,7 @@ dobb_metadata = MetaData(bind=dobb_engine)
 EventSession = sessionmaker()
 event_metadata = MetaData()
 
+UPLOAD_FOLDER = "/input_files"
 
 # Ensure responses aren't cached
 @app.after_request
@@ -102,19 +104,36 @@ def register():
 def add_school():
     event_session = EventSession()
     if request.method == "POST":
+        student_list_file = request.files["file"]
         school_name = request.form.get("school_name")
-        student_names = request.form.get("student_names").split(", ")
+        school_grade = request.form.get("school_grade") 
+        student_data = request.form.get("student_names")
 
-        school = School(name = school_name)
+        if student_list_file is not None:
+            student_list_file.save(f"input_files/{student_list_file.filename}")
+            with open(f"input_files/{student_list_file.filename}") as csv_file:
+                data = csv.reader(csv_file, delimiter = ',')
+
+                rows = []
+                for row in data:
+                    rows.append(row)
+
+            school = School(name=rows[0][0], grade=rows[0][1])
+            student_data = []
+            for i in range(1, len(rows)):
+                student_data.append(rows[i])
+        else:        
+            school = School(name = school_name, grade = school_grade)
 
         if event_session.query(School).filter(School.name == school.name).first() is None:
             event_session.add(school)
             event_session.commit()
         else:
             school = event_session.query(School).filter(School.name == school.name).first()
+            school.grade = school_grade
 
-        for name in student_names:
-            student = Student(name = name, school_id = school.id)
+        for row in student_data:
+            student = Student(name = row[0], school_id = school.id, gender = row[1])
             event_session.add(student)
 
         event_session.commit()
@@ -129,7 +148,7 @@ def add_committee():
     event_session = EventSession()
     if request.method == "POST":
         committee_name = request.form.get("committee_name")
-        portfolios_names = request.form.get("portfolio_names").split(", ")
+        portfolios_raw = request.form.get("portfolio_names").split("\n")
 
         committee = Committee(name = committee_name)
         if event_session.query(Committee).filter(Committee.name == committee.name).first() is None:
@@ -138,8 +157,9 @@ def add_committee():
         else:
             committee = event_session.query(Committee).filter(Committee.name == committee.name).first()
 
-        for name in portfolios_names:
-            portfolio = Portfolio(name = name, committee_id = committee.id)
+        for string in portfolios_raw:
+            info = string.split(", ")
+            portfolio = Portfolio(name = info[0], committee_id = committee.id, rank = info[1])
             event_session.add(portfolio)
 
         event_session.commit()
@@ -171,7 +191,7 @@ def select_event():
 
         # request for event's database name and bind all variables to it
         # create new database for event
-        engine = create_engine('sqlite:///databases/'+event.filename, connect_args={'check_same_thread': False}, echo=True)
+        engine = create_engine(f'sqlite:///databases/{event.filename}', connect_args={'check_same_thread': False}, echo=True)
         # configure global variables
         EventSession.configure(bind=engine)
 
@@ -200,7 +220,7 @@ def create_database():
         if key != confirmation:
             return apology("confirmation does not match")
 
-        filename = event_name.replace(" ", "_") + '.db'
+        filename = event_name.replace(" ", "_").replace("/", "-") + '.db'
         # create connection to dobby.db
         app_session = AppSession()
 
@@ -221,6 +241,8 @@ def create_database():
         # remember database id
         session["event_id"] = event.id
 
+        app_session.close()
+
         return redirect("/")
 
     else:
@@ -236,18 +258,18 @@ def logout():
 @database_access
 def view():
     session = EventSession()
-    
+
     rows = session.query(Student.id, Portfolio.name, Student.name, Committee.name).join(Student, Committee).order_by(Student.id).all()
     return render_template("view.html", rows=rows)
 
 
-@app.route("/sort", methods=["POST", "GET"])
+@app.route("/sort_all", methods=["POST"])
 @database_access
-def sort():
+def sort_all():
     if request.method == "POST":
         event_session = EventSession()
-        portfolios = event_session.query(Portfolio).order_by(func.random()).all()
-        students = event_session.query(Student).order_by(func.random()).all()
+        portfolios = event_session.query(Portfolio).order_by(Portfolio.rank).all()
+        students = event_session.query(Student).order_by(School.grade).all()
 
         count = event_session.query(func.count(Student.id)).first()[0]
 
@@ -257,7 +279,17 @@ def sort():
         event_session.commit()
         return redirect("/")
 
+    # under construction
+    # if request.method == "POST":
+        # event_session = EventSession()
+        # shuffle portfolio_id
+        # get schools+portfolios from database order by id and grade
+        # portfolios = event_session.query(Portfolio, Committee).join(Committee).order_by(Portfolio.rank, Committe.id).all()
+        # return render_template("viewv.html")
 
+        # get committees
+        # loop and get each committee's portfolios
+        # for students iterate through committees and assign portfolios
+        # commit
 
-
-
+        # sorted by rank, as many different committees, fair sort?
