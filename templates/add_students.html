@@ -1,0 +1,18 @@
+{% extends "layout.html" %}
+
+{% block title %}
+Add Students
+{% endblock %}
+
+{% block body %}
+<form action="/add_students" method="post" enctype="multipart/form-data">
+    <select class="form-control" name="school_id">
+    	<option disabled="" value ="" selected="">Event Name</option>
+	    {% for school in schools %}
+	    <option value="{{ school.id }}">{{ school.name }}</option>
+	    {% endfor %}
+    </select>
+    <input type="file" name="file">
+	<button type="submit">Open</button>
+</form>
+{% endblock %}

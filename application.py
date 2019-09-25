@@ -1,5 +1,6 @@
 import os
 import csv
+import random
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.sql.expression import func
@@ -66,6 +67,7 @@ def login():
         session["user_id"] = user.id
         session["user"] = user.username
 
+        sqlSession.close()
         return redirect("/select_event")
 
     else:
@@ -95,50 +97,82 @@ def register():
         sqlSession.add(user)
         sqlSession.commit()
 
+        sqlSession.close()
         return redirect("/login")
     else:
         return render_template("register.html")
 
-@app.route("/add_school", methods=["POST", "GET"])
+@app.route("/add_students", methods=["POST", "GET"])
 @database_access
 def add_school():
     event_session = EventSession()
     if request.method == "POST":
+        return apology("route incomplete")
         student_list_file = request.files["file"]
-        school_name = request.form.get("school_name")
-        school_grade = request.form.get("school_grade") 
-        student_data = request.form.get("student_names")
-
+        school_id = request.form.get("school_id")
         if student_list_file is not None:
+            # need to create file path to be able to open a csv file object
             student_list_file.save(f"input_files/{student_list_file.filename}")
             with open(f"input_files/{student_list_file.filename}") as csv_file:
                 data = csv.reader(csv_file, delimiter = ',')
-
                 rows = []
                 for row in data:
                     rows.append(row)
 
-            school = School(name=rows[0][0], grade=rows[0][1])
-            student_data = []
-            for i in range(1, len(rows)):
-                student_data.append(rows[i])
+            # clear up space in server
+            os.remove(f"input_files/{student_list_file.filename}")
+
+            school = event_session.query(School).filter(id = school_id).first()
+
         else:        
-            school = School(name = school_name, grade = school_grade)
+            return apology("please submit a csv file")
 
-        if event_session.query(School).filter(School.name == school.name).first() is None:
-            event_session.add(school)
-            event_session.commit()
-        else:
-            school = event_session.query(School).filter(School.name == school.name).first()
-            school.grade = school_grade
 
-        for row in student_data:
+        for row in rows:
             student = Student(name = row[0], school_id = school.id, gender = row[1])
             event_session.add(student)
 
         event_session.commit()
+        event_session.close()
         return redirect("/")
 
+    else:
+        schools = event_session.query(School).all()
+        return render_template("/add_students.html", schools = schools)
+
+@app.route("/add_school", methods=["POST", "GET"])
+@database_access
+def get_school():
+    if request.method == "POST":
+        event_session = EventSession()
+        school_name = request.form.get("school_name")
+        number_of_students = request.form.get("size")
+        school_grade = request.form.get("grade")
+        school_sex = request.form.get("gender")
+
+        school = School(name = school_name, delegation_size = number_of_students, grade = school_grade)
+        if event_session.query(School).filter(School.name == school.name).first() is not None:
+            return apology("School is already part of event")
+
+        event_session.add(school)
+        event_session.commit()
+
+        for i in range(0, int(number_of_students)):
+            if school_sex == "male":
+                event_session.add(Student(gender = 1, school_id = school.id))
+            
+            elif school_sex == "female":
+                event_session.add(Student(gender = 0, school_id = school.id))
+
+            else:
+                if random.random() > 0.6:
+                    event_session.add(Student(gender = 0, school_id = school.id))
+                else:
+                    event_session.add(Student(gender = 1, school_id = school.id))
+            
+        event_session.commit()
+        event_session.close()
+        return redirect("/")
     else:
         return render_template("add_school.html")
 
@@ -147,25 +181,54 @@ def add_school():
 def add_committee():
     event_session = EventSession()
     if request.method == "POST":
+        committee_file = request.files["file"]
         committee_name = request.form.get("committee_name")
-        portfolios_raw = request.form.get("portfolio_names").split("\n")
+        portfolios_raw = request.form.get("portfolio_names")
 
-        committee = Committee(name = committee_name)
+        if committee_file is not None:
+            # need to create file path to be able to open a csv file object
+            committee_file.save(f"input_files/{committee_file.filename}")
+            with open(f"input_files/{committee_file.filename}") as csv_file:
+                data = csv.reader(csv_file, delimiter = ',')
+                rows = []
+                for row in data:
+                    rows.append(row)
+
+            # clear up space in server
+            os.remove(f"input_files/{committee_file.filename}")
+
+            committee = Committee(name = rows[0][0])
+
+        else:
+            committee = Committee(name = committee_name)
+
         if event_session.query(Committee).filter(Committee.name == committee.name).first() is None:
             event_session.add(committee)
             event_session.commit()
         else:
             committee = event_session.query(Committee).filter(Committee.name == committee.name).first()
 
-        for string in portfolios_raw:
-            info = string.split(", ")
-            portfolio = Portfolio(name = info[0], committee_id = committee.id, rank = info[1])
-            event_session.add(portfolio)
+        if committee_file:
+            for i in range(1, len(row)):
+                rank = int(row[i][1])
+                if rank > 5 or rank < 1:
+                    return apology("Portfolio ranks must be in range 1 to 5")
+                portfolio = Portfolio(name = row[i][0], committee_id = committee.id, rank = int(row[i][1]))
+                event_session.add(portfolio)
+
+        else:
+            for string in portfolios_raw.split("\n"):
+                info = string.split(", ")
+                portfolio = Portfolio(name = info[0], committee_id = committee.id, rank = info[1])
+                event_session.add(portfolio)
 
         event_session.commit()
+        event_session.close()
+
         return redirect("/")
 
     else:
+        event_session.close()
         return render_template("add_committee.html")
 
 @app.route("/select_event", methods=["POST", "GET"])
@@ -194,6 +257,7 @@ def select_event():
         engine = create_engine(f'sqlite:///databases/{event.filename}', connect_args={'check_same_thread': False}, echo=True)
         # configure global variables
         EventSession.configure(bind=engine)
+        app_session.close()
 
         session["event_id"] = event.id
 
@@ -201,6 +265,7 @@ def select_event():
 
     else:
         events = app_session.query(Event).all()
+        app_session.close()
         return render_template("file-select.html", events = events)
 
 
@@ -253,13 +318,14 @@ def create_database():
 def logout():
     session.clear()
     return redirect("/")
-
+    
 @app.route("/view")
 @database_access
 def view():
     session = EventSession()
 
     rows = session.query(Student.id, Portfolio.name, Student.name, Committee.name).join(Student, Committee).order_by(Student.id).all()
+    session.close()
     return render_template("view.html", rows=rows)
 
 

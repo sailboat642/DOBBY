@@ -8,14 +8,15 @@ New School
 <form action="/add_school" method="post" >
 	<div class = "form-group">
 	    <input class="form-control"placeholder="School Name" type="text" autofocus name="school_name">
-	    <textarea name="student_names" rows="4" cols="50"></textarea>
+		<input class="form-control"placeholder="Delegation Size" type="number"  name="size" min="0" max="15">
+		<input class="form-control"placeholder="Grade" type="number"  name="grade" min="1" max="5">
+	    <select class="form-control" name="gender">
+	    	<option disabled="" value ="" selected="">School Gender</option>
+		    <option value="female">All Girls</option>
+		    <option value="male">All Boys</option>
+		    <option value="co-ed">Co-ed</option>
+	    </select>
 		<button class="btn btn-primary" type="submit">Submit</button>
 	</div>
 </form>
-<form action="/add_school" method="post" enctype="multipart/form-data">
-	<div class="form-group">
-		<input type="file" name="file">
-		<input type="submit" value="Upload">
-	</div>
-</form>	
 {% endblock %}

@@ -43,8 +43,8 @@ class School(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(255), nullable=False, unique=True)
-    student_population = Column(Integer)
-    grade = Column(Integer)
+    delegation_size = Column(Integer)
+    grade = Column(Integer, nullable=False)
 
 
 
@@ -53,7 +53,7 @@ class Student(Base):
     __tablename__ = 'students'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String(255), nullable=False)
+    name = Column(String(255))
     school_id = Column(Integer, ForeignKey("schools.id"))
     gender = Column(Integer, nullable=True) # 1 if male 0 if female
 
@@ -68,7 +68,7 @@ class Portfolio(Base):
     committee_id = Column(Integer, ForeignKey("committees.id"), nullable=False)
     student_id = Column(Integer, ForeignKey("students.id"))
     school_id = Column(Integer, ForeignKey("schools.id"))
-    rank = Column(Integer)
+    rank = Column(Integer, nullable=False)
 
     committee = relationship("Committee", back_populates="portfolios")
     student = relationship("Student", back_populates="portfolio")
