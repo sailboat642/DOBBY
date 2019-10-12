@@ -3,7 +3,7 @@ import csv
 import random
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.sql.expression import func
+from sqlalchemy.sql.expression import func, select 
 
 from flask import Flask, flash, jsonify, redirect, render_template, request, session
 from tempfile import mkdtemp
@@ -20,7 +20,7 @@ from helpers import login_required, apology, database_access
 
 
 app = Flask(__name__)
-app.secret_key = os.urandom(642)
+app.secret_key = os.urandom(7)
 
 # sqlalchemy for dobby.db
 # engine for database
@@ -104,7 +104,7 @@ def register():
 
 @app.route("/add_students", methods=["POST", "GET"])
 @database_access
-def add_school():
+def populate_school():
     event_session = EventSession()
     if request.method == "POST":
         return apology("route incomplete")
@@ -122,15 +122,16 @@ def add_school():
             # clear up space in server
             os.remove(f"input_files/{student_list_file.filename}")
 
-            school = event_session.query(School).filter(id = school_id).first()
+            school = event_session.query(School).filter(id == school_id).first()
 
         else:        
             return apology("please submit a csv file")
-
-
-        for row in rows:
-            student = Student(name = row[0], school_id = school.id, gender = row[1])
-            event_session.add(student)
+        
+        students = event_session.query(Student).filter(school_id == school.id).order_by(Student.id).all()
+        for i in range(len(students)):
+            portfolio = event_session.query(Portfolio).filter(Portfolio.school_id == school.id, Portfolio.name == row[i][0]).first()
+            students[i].name = row[i][0]
+            portfolio.student_id = students[i].id
 
         event_session.commit()
         event_session.close()
@@ -165,6 +166,7 @@ def get_school():
                 event_session.add(Student(gender = 0, school_id = school.id))
 
             else:
+                # if co-ed, then higher chance of a male student
                 if random.random() > 0.6:
                     event_session.add(Student(gender = 0, school_id = school.id))
                 else:
@@ -179,8 +181,8 @@ def get_school():
 @app.route("/add_committee", methods=["POST", "GET"])
 @database_access
 def add_committee():
-    event_session = EventSession()
     if request.method == "POST":
+        event_session = EventSession()
         committee_file = request.files["file"]
         committee_name = request.form.get("committee_name")
         portfolios_raw = request.form.get("portfolio_names")
@@ -208,12 +210,13 @@ def add_committee():
         else:
             committee = event_session.query(Committee).filter(Committee.name == committee.name).first()
 
+
         if committee_file:
-            for i in range(1, len(row)):
-                rank = int(row[i][1])
-                if rank > 5 or rank < 1:
+            for i in range(1, len(rows)):
+                rank = int(rows[i][1])
+                if rank > 3 or rank < 1:
                     return apology("Portfolio ranks must be in range 1 to 5")
-                portfolio = Portfolio(name = row[i][0], committee_id = committee.id, rank = int(row[i][1]))
+                portfolio = Portfolio(name = rows[i][0], committee_id = committee.id, rank = rank)
                 event_session.add(portfolio)
 
         else:
@@ -228,7 +231,6 @@ def add_committee():
         return redirect("/")
 
     else:
-        event_session.close()
         return render_template("add_committee.html")
 
 @app.route("/select_event", methods=["POST", "GET"])
@@ -274,7 +276,6 @@ def select_event():
 def create_database():
     '''new database'''
     if request.method == "POST":
-        # get input from form
         event_name = request.form.get("event_name")
         key = request.form.get("key")
         confirmation = request.form.get("confirmation")
@@ -295,6 +296,7 @@ def create_database():
 
         # create new database for event
         engine = create_engine(f"sqlite:///databases/{filename}", echo=True, connect_args={'check_same_thread': False})
+
         # configure global variables
         EventSession.configure(bind=engine)
 
@@ -334,28 +336,5 @@ def view():
 def sort_all():
     if request.method == "POST":
         event_session = EventSession()
-        portfolios = event_session.query(Portfolio).order_by(Portfolio.rank).all()
-        students = event_session.query(Student).order_by(School.grade).all()
-
-        count = event_session.query(func.count(Student.id)).first()[0]
-
-        for i in range(count):
-            portfolios[i].student_id = students[i].id
-
-        event_session.commit()
-        return redirect("/")
-
-    # under construction
-    # if request.method == "POST":
-        # event_session = EventSession()
-        # shuffle portfolio_id
-        # get schools+portfolios from database order by id and grade
-        # portfolios = event_session.query(Portfolio, Committee).join(Committee).order_by(Portfolio.rank, Committe.id).all()
-        # return render_template("viewv.html")
-
-        # get committees
-        # loop and get each committee's portfolios
-        # for students iterate through committees and assign portfolios
-        # commit
-
-        # sorted by rank, as many different committees, fair sort?
+        event_session.close()
+        return apology("Incomplete")
