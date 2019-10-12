@@ -107,7 +107,6 @@ def register():
 def populate_school():
     event_session = EventSession()
     if request.method == "POST":
-        return apology("route incomplete")
         student_list_file = request.files["file"]
         school_id = request.form.get("school_id")
         if student_list_file is not None:
