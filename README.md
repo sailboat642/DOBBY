@@ -26,16 +26,17 @@ The secretariat will have to upload a csv file for each committee. The csv file 
 
 | **Committee Name** |                  |
 | ------------------ | ---------------- |
-| *Portfolio Rank*   | *Portfolio Name* |
+| *Portfolio Name*   | *Portfolio Rank* |
 
 **Example**
 
 | DISEC |      |
 | ----- | ---- |
-| 1     | Iran |
-| 2      | India|
-| 2 | Greece|
-| 3 | Brazil|
+| Iran   | 1 |
+| India  | 2 |
+| Greece | 2 |
+| Brazil | 3 |
+| .... | ....|
 
 The rank need not be sorted. The ranks must be given in the range 1-3 with 1 being the highest. Rankings are given according to a portfolios involvement in the Committee.
 

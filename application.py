@@ -325,7 +325,8 @@ def logout():
 def view():
     session = EventSession()
 
-    rows = session.query(Student.id, Portfolio.name, Student.name, Committee.name).join(Student, Committee).order_by(Student.id).all()
+    # fixes need to query: join multiple tables
+    rows = session.query(Portfolio.name, Portfolio.id, Committee.name, Student.name, Student.id, School.name).join(Portfolio.committee, Portfolio.student, Student.school).filter(Portfolio.student != None).order_by(Student.id).all()
     session.close()
     return render_template("view.html", rows=rows)
 
@@ -335,5 +336,21 @@ def view():
 def sort_all():
     if request.method == "POST":
         event_session = EventSession()
+
+        schools = event_session.query(School).all()
+
+        portfolios = event_session.query(Portfolio).all()
+        for portfolio in portfolios:
+            portfolio.student_id = None
+
+        for school in schools:
+            student = event_session.query(Student).filter(Student.school_id == school.id).order_by(Student.id).first()
+            portfolio = event_session.query(Portfolio).filter(Portfolio.student_id == None, Portfolio.rank == 1).first()
+            portfolio.student_id = student.id
+            event_session.commit()
+
+        
+
+
         event_session.close()
-        return apology("Incomplete")
+        return redirect("/view")
