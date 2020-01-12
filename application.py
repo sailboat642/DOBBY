@@ -326,7 +326,7 @@ def view():
     session = EventSession()
 
     # fixes need to query: join multiple tables
-    rows = session.query(Portfolio.name, Portfolio.id, Committee.name, Student.name, Student.id, School.name).join(Portfolio.committee, Portfolio.student, Student.school).filter(Portfolio.student != None).order_by(Student.id).all()
+    rows = session.query(Portfolio.id, Portfolio.rank, Portfolio.name, Committee.name, Student.id, Student.name, School.name, School.grade).join(Portfolio.committee, Portfolio.student, Student.school).filter(Portfolio.student != None).order_by(Student.id).all()
     session.close()
     return render_template("view.html", rows=rows)
 
@@ -349,8 +349,16 @@ def sort_all():
             portfolio.student_id = student.id
             event_session.commit()
 
-        
-
+        # what to do next
+        # give portfolios grade wise
+        students = event_session.query(Student.id, Student.name, School.id, School.grade).join(Student.school).order_by(School.grade).all()
+        portfolios = event_session.query(Portfolio).filter(Portfolio.student == None).order_by(Portfolio.rank).all()
+        for i in range(len(students)):
+            query = event_session.query(Portfolio).filter(Portfolio.student_id == students[i][0]).first()
+            if not query:
+                portfolios[i].student_id = students[i][0]
+            
+        event_session.commit()
 
         event_session.close()
         return redirect("/view")
