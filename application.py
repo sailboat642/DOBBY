@@ -102,43 +102,35 @@ def register():
     else:
         return render_template("register.html")
 
+@app.route("/select_school")
+@database_access
+def school_select():
+    session = EventSession()
+    schools = session.query(School).all()
+    session.close()
+    return render_template("select_school.html", schools=schools)
+
 @app.route("/add_students", methods=["POST", "GET"])
 @database_access
 def populate_school():
     event_session = EventSession()
     if request.method == "POST":
-        student_list_file = request.files["file"]
-        school_id = request.form.get("school_id")
-        if student_list_file is not None:
-            # need to create file path to be able to open a csv file object
-            student_list_file.save(f"input_files/{student_list_file.filename}")
-            with open(f"input_files/{student_list_file.filename}") as csv_file:
-                data = csv.reader(csv_file, delimiter = ',')
-                rows = []
-                for row in data:
-                    rows.append(row)
+        school_id = request.form.get('school_id')
+        portfolios = event_session.query(Portfolio).join(Portfolio.student).filter(Student.school_id == school_id).all()
 
-            # clear up space in server
-            os.remove(f"input_files/{student_list_file.filename}")
+        for portfolio in portfolios:
+            student_name = request.form.get(portfolio.name)
+            portfolio.student.name = student_name
+            event_session.commit()
 
-            school = event_session.query(School).filter(id == school_id).first()
-
-        else:        
-            return apology("please submit a csv file")
-        
-        students = event_session.query(Student).filter(school_id == school.id).order_by(Student.id).all()
-        for i in range(len(students)):
-            portfolio = event_session.query(Portfolio).filter(Portfolio.school_id == school.id, Portfolio.name == row[i][0]).first()
-            students[i].name = row[i][0]
-            portfolio.student_id = students[i].id
-
-        event_session.commit()
         event_session.close()
-        return redirect("/")
 
+        return redirect("/view")
     else:
-        schools = event_session.query(School).all()
-        return render_template("/add_students.html", schools = schools)
+        school_id = request.args.get("school")
+        portfolios = event_session.query(Portfolio).join(Portfolio.student).filter(Student.school_id == school_id).all()
+        event_session.close()
+        return render_template("add_students.html", portfolios=portfolios, school_id=school_id)
 
 @app.route("/add_school", methods=["POST", "GET"])
 @database_access

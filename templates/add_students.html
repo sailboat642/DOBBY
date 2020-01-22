@@ -6,13 +6,13 @@ Add Students
 
 {% block body %}
 <form action="/add_students" method="post" enctype="multipart/form-data">
-    <select class="form-control" name="school_id">
-    	<option disabled="" value ="" selected="">Event Name</option>
-	    {% for school in schools %}
-	    <option value="{{ school.id }}">{{ school.name }}</option>
-	    {% endfor %}
-    </select>
-    <input type="file" name="file">
+<p>List of portfolios for this school</p>
+	<ul>
+		<input type="hidden" value="{{ school_id }}" name="school_id">
+		{% for portfolio in portfolios %}
+		<li class='form-group'>{{ portfolio.name }}<input autocomplete="off"  name="{{ portfolio.name }}" placeholder="Student Name" type="text"></li>
+		{% endfor %}
+	</ul>
 	<button type="submit">Open</button>
 </form>
 {% endblock %}
