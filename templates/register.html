@@ -5,16 +5,12 @@
 {% endblock %}
 
 {% block body %}
-    <form action="/register" method="post" id="user_input">
-        <div class="form-group">
-            <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text"/>
-        </div>
-        <div class="form-group">
-            <input class="form-control" name="password" placeholder="Password" type="password"/>
-        </div>
-        <div class="form-group">
-            <input class="form-control" name="confirmation" placeholder="Password" type="password"/>
-        </div>
-        <button id ="check" class="btn btn-primary" type="submit">Register</button>
+<div class="d-flex justify-content-center">
+    <form action="/register" method="post" class="col-md-4">
+        <input autocomplete="off" autofocus class="form-control mt-4" name="username" placeholder="Username" type="text"/>
+        <input class="form-control mt-4" name="password" placeholder="Password" type="password"/>
+        <input class="form-control mt-4" name="confirmation" placeholder="Password" type="password"/>
+        <button id ="check" class="btn btn-primary mt-4 col-md-4" type="submit">Register</button>
     </form>
+</div>
 {% endblock %}

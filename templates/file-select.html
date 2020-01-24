@@ -5,21 +5,23 @@
 {% endblock %}
 
 {% block body %}
-<form action="/select_event" method="post">
-	<div>
-	    <select class="form-control" name="name">
-	    	<option disabled="" value ="" selected="">Event Name</option>
-		    {% for event in events %}
-		    <option value="{{ event.name }}">{{ event.name }}</option>
-		    {% endfor %}
-	    </select>
-    	<input class="form-control" type="password" name="key">
-	<button type="submit">Open</button>
+<div class="d-flex justify-content-center">
+	<form action="/select_event" method="post" class="col-md-4">
+		<div>
+			<select class="form-control mt-3" name="name">
+				<option disabled="" value ="" selected="">Event Name</option>
+				{% for event in events %}
+				<option value="{{ event.name }}">{{ event.name }}</option>
+				{% endfor %}
+			</select>
+			<input class="form-control mt-3" type="password" placeholder="Key" name="key">
+			<button type="submit" class="btn btn-success mt-3 col-md-4">Open</button>
 
-	</div>
+		</div>
 
-</form>
-<form action="/create" method="get">
-	<button type="submit">New Event</button>
-</form>
+	</form>
+	<form action="/create" method="get" class="col-md-4">
+		<button type="submit" class="btn btn-primary mt-3 col-md-12">New Event</button>
+	</form>
+</div>
 {% endblock %}

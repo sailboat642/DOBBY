@@ -5,14 +5,20 @@ Add Students
 {% endblock %}
 
 {% block body %}
-<form action="/add_students" method="post" enctype="multipart/form-data">
-<p>List of portfolios for this school</p>
-	<ul>
+<div class="d-flex justify-content-center">
+    <form action="/add_students" method="post" enctype="multipart/form-data" class="col-md-6">
+	    <input type="hidden" value="{{ school_id }}" name="school_id">
+        <p>List of portfolios for this school:</p>
+        <table>
+    		{% for portfolio in portfolios %}
+       		<div class='input-group mb-2'>
+    			<div class="input-group-prepend"><span class="input-group-text">{{ portfolio.name }}</span></div>
+    			<input class="form-control" autocomplete="off"  name="{{ portfolio.name }}" placeholder="Student Name" type="text">
+		    </div>
+		    {% endfor %}
+	    </table>
+	    <button type="submit" class="btn btn-primary col-md-3">Submit</button>
 		<input type="hidden" value="{{ school_id }}" name="school_id">
-		{% for portfolio in portfolios %}
-		<li class='form-group'>{{ portfolio.name }}<input autocomplete="off"  name="{{ portfolio.name }}" placeholder="Student Name" type="text"></li>
-		{% endfor %}
-	</ul>
-	<button type="submit">Open</button>
-</form>
+    </form>
+</div>
 {% endblock %}

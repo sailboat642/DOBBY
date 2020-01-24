@@ -5,16 +5,11 @@
 {% endblock %}
 
 {% block body %}
-<div id="login" class="page-center">
-	<img src="####" alt="logo">
-	<form action="/login" method="post">
-        <div class="form-group">
-            <input autocomplete="off" autofocus class="form-control" name="username" placeholder="Username" type="text">
-        </div>
-        <div class="form-group">
-            <input class="form-control" name="password" placeholder="Password" type="password">
-        </div>
-        <button class="btn btn-primary" type="submit">Log In</button>
+<div class="d-flex justify-content-center">
+    <form action="/login" method="post" class="col-md-4">
+        <input autocomplete="off" autofocus class="form-control mt-4" name="username" placeholder="Username" type="text">
+        <input class="form-control mt-4" name="password" placeholder="Password" type="password">
+        <button class="btn btn-success mt-4 col-md-4" type="submit">Log In</button>
     </form>
 </div>
 {% endblock %}

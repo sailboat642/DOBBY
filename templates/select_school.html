@@ -5,16 +5,15 @@
 {% endblock %}
 
 {% block body %}
-<form action="/add_students" method="get">
-	<div>
-	    <select class="form-control" name="school">
+<form action="/add_students" method="get" class="d-flex justify-content-center">
+	<div class="input-group col-md-6">
+	    <select class="form-control custom-select col-md-10" name="school">
 	    	<option disabled="" value ="" selected="">School Name</option>
 		    {% for school in schools %}
 		    <option value="{{ school.id }}">{{ school.name }}</option>
 		    {% endfor %}
 	    </select>
-	<button type="submit">Open</button>
-
+	    <button type="submit" class="btn btn-success col-md-2">Open</button>
 	</div>
 </form>
 {% endblock %}

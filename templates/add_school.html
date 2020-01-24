@@ -5,18 +5,20 @@ New School
 {% endblock %}
 
 {% block body %}
-<form action="/add_school" method="post" >
-	<div class = "form-group">
-	    <input class="form-control"placeholder="School Name" type="text" autofocus name="school_name">
-		<input class="form-control"placeholder="Delegation Size" type="number"  name="size" min="0" max="15">
-		<input class="form-control"placeholder="Grade" type="number"  name="grade" min="1" max="5">
-	    <select class="form-control" name="gender">
+<div class="d-flex justify-content-center">
+    <form action="/add_school" method="post" class="col-md-6">
+		<input class="form-control mt-3"placeholder="School Name" type="text" autofocus name="school_name">
+		<div class="input-group mt-3">
+		    <input class="form-control" placeholder="Delegation Size" type="number"  name="size" min="1" max="15">
+	    	<input class="form-control" placeholder="Grade" type="number"  name="grade" min="1" max="5">
+		</div>
+	    <select class="form-control mt-3 custom-select" name="gender">
 	    	<option disabled="" value ="" selected="">School Gender</option>
 		    <option value="female">All Girls</option>
 		    <option value="male">All Boys</option>
 		    <option value="co-ed">Co-ed</option>
 	    </select>
-		<button class="btn btn-primary" type="submit">Submit</button>
-	</div>
-</form>
+		<button class="btn btn-primary mt-3 col-md-3" type="submit">Submit</button>
+	</form>
+</div>
 {% endblock %}

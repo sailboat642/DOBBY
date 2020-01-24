@@ -175,10 +175,8 @@ def add_committee():
     if request.method == "POST":
         event_session = EventSession()
         committee_file = request.files["file"]
-        committee_name = request.form.get("committee_name")
-        portfolios_raw = request.form.get("portfolio_names")
 
-        if committee_file is not None:
+        if committee_file:
             # need to create file path to be able to open a csv file object
             committee_file.save(f"input_files/{committee_file.filename}")
             with open(f"input_files/{committee_file.filename}") as csv_file:
@@ -191,9 +189,9 @@ def add_committee():
             os.remove(f"input_files/{committee_file.filename}")
 
             committee = Committee(name = rows[0][0])
-
         else:
-            committee = Committee(name = committee_name)
+            return apology("No file given", 400)
+
 
         if event_session.query(Committee).filter(Committee.name == committee.name).first() is None:
             event_session.add(committee)
@@ -202,19 +200,12 @@ def add_committee():
             committee = event_session.query(Committee).filter(Committee.name == committee.name).first()
 
 
-        if committee_file:
-            for i in range(1, len(rows)):
-                rank = int(rows[i][1])
-                if rank > 3 or rank < 1:
-                    return apology("Portfolio ranks must be in range 1 to 5")
-                portfolio = Portfolio(name = rows[i][0], committee_id = committee.id, rank = rank)
-                event_session.add(portfolio)
-
-        else:
-            for string in portfolios_raw.split("\n"):
-                info = string.split(", ")
-                portfolio = Portfolio(name = info[0], committee_id = committee.id, rank = info[1])
-                event_session.add(portfolio)
+        for i in range(1, len(rows)):
+            rank = int(rows[i][1])
+            if rank > 3 or rank < 1:
+                return apology("Portfolio ranks must be in range 1 to 5")
+            portfolio = Portfolio(name = rows[i][0], committee_id = committee.id, rank = rank)
+            event_session.add(portfolio)
 
         event_session.commit()
         event_session.close()
@@ -318,7 +309,7 @@ def view():
     session = EventSession()
 
     # fixes need to query: join multiple tables
-    rows = session.query(Portfolio.id, Portfolio.rank, Portfolio.name, Committee.name, Student.id, Student.name, School.name, School.grade).join(Portfolio.committee, Portfolio.student, Student.school).filter(Portfolio.student != None).order_by(Student.id).all()
+    rows = session.query(Portfolio.rank, Portfolio.name, Committee.name, Student.name, School.name, School.grade).join(Portfolio.committee, Portfolio.student, Student.school).filter(Portfolio.student != None).order_by(School.id).all()
     session.close()
     return render_template("view.html", rows=rows)
 

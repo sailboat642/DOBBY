@@ -16,18 +16,18 @@
 		<link href=# rel="icon" >
 	</head>
 	<body>
-		<header class="navbar navbar-expand-md navbar-light bg-light border">
-			<a class="navbar-brand" href="/"><div class="logo"></div></a>
+		<header class="navbar navbar-expand-sm navbar-light bg-light border">
+			<a class="navbar-brand" href="/">Dobby</a>
 			<nav class="collapse navbar-collapse" id="navbar">
 				{% if session %}
 				<ul class="navbar-nav mr-auto mt-2">
-					<li class="nav-item"><a href="./logout">Log Out</a></li>
-					<li class="nav-item"><a href="./">Home</a></li>
+					<li class="nav-item"><a class="nav-link" href="./logout">Log Out</a></li>
+					<li class="nav-item"><a class="nav-link" href="./">Home</a></li>
 				</ul>
 				{% else %}
 				<ul class="navbar-nav ml-auto mt-2">
-					<li class="nav-item"><a href="./register">Register</a></li>
-					<li class="nav-item"><a href="./login">Login</a></li>
+					<li class="nav-item"><a class="nav-link" href="./register">Register</a></li>
+					<li class="nav-item"><a class="nav-link" href="./login">Login</a></li>
 				</ul>
 				{% endif %}
 			</nav>

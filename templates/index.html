@@ -8,15 +8,15 @@
 
 
 {% block body %}
-<ul>
-	<li><a href="/add_school">Add a School</a></li>
-	<li><a href="/select_school">Add Students</a></li>
-	<li><a href="/add_committee">Add a Committe</a></li>
-	<li><form action="/sort_all" method="post">
-		<button type="Submit">Sort</button>
-	</form></li>
-	<li><a href="/view">View Structure</a></li>
-</ul>
-
-
+<div class="d-flex justify-content-center">
+    <ul class="list-group-flush col-md-4">
+    	<a href="/add_school" class="list-group-item-action list-group-item list-group-item-success mt-2">Add a School</a>
+    	<a href="/select_school" class="list-group-item-action list-group-item list-group-item-success mt-2">Add Students</a>
+    	<a href="/add_committee" class="list-group-item-action list-group-item list-group-item-success mt-2">Add a Committe</a>
+    	<a href="/view" class="list-group-item-action list-group-item list-group-item-info mt-2">View Structure</a>
+    	<form action="/sort_all" method="post">
+        		<button type="submit" class="btn btn-primary btn-lg mt-4 col-md-12">Sort</button>
+       	</form>
+    </ul>
+</div>
 {% endblock %}

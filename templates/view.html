@@ -5,13 +5,38 @@ View
 {% endblock %}
 
 {% block body %}
-<table>
-	{% for row in rows %}
-	<tr>
-		{% for element in row %}
-		<td>{{ element }}</td>
-		{% endfor %}
-	</tr>
+<input class="form-control" id="myInput" type="text" placeholder="Search..">
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<th>Rank</th>
+			<th>Portfolio</th>
+			<th>Committee</th>
+			<th>Student</th>
+			<th>School</th>
+			<th>School Grade</th>
+		</tr>
+	</thead>
+	<tbody id="allocations">
+		{% for row in rows %}
+		<tr>
+			{% for element in row %}
+			<td>{{ element }}</td>
+			{% endfor %}
+		</tr>
 	{% endfor %}
+	</tbody>
+
 </table>
+
+<script>
+$(document).ready(function(){
+  $("#myInput").on("keyup", function() {
+    var value = $(this).val().toLowerCase();
+    $("#allocations tr").filter(function() {
+      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+    });
+  });
+});
+</script>
 {% endblock %}
