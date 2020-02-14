@@ -5,7 +5,7 @@ View
 {% endblock %}
 
 {% block body %}
-<input class="form-control" id="myInput" type="text" placeholder="Search..">
+<input class="form-control" id="sortedSearch" type="text" placeholder="Search..">
 <table class="table table-striped">
 	<thead>
 		<tr>
@@ -17,23 +17,74 @@ View
 			<th>School Grade</th>
 		</tr>
 	</thead>
-	<tbody id="allocations">
-		{% for row in rows %}
+	<tbody id="sortedGrid">
+		{% for row in sorted_portfolios %}
 		<tr>
 			{% for element in row %}
 			<td>{{ element }}</td>
 			{% endfor %}
 		</tr>
-	{% endfor %}
+		{% endfor %}
+	</tbody>
+
+</table>
+
+<input class="form-control" id="extrasSearch" type="text" placeholder="Search..">
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<th>Rank</th>
+			<th>Portfolio</th>
+			<th>Committee</th>
+		</tr>
+	</thead>
+	<tbody id="extrasGrid">
+		{% for row in extra_portfolios %}
+		<tr>
+			{% for element in row %}
+			<td>{{ element }}</td>
+			{% endfor %}
+		</tr>
+		{% endfor %}
+	</tbody>
+
+</table>
+
+<table class="table table-striped">
+	<thead>
+		<tr>
+			<th>School ID</th>
+			<th>Name</th>
+			<th>School Grade</th>
+			<th>Size</th>
+		</tr>
+	</thead>
+	<tbody>
+		{% for row in schools %}
+		<tr>
+			{% for element in row %}
+			<td>{{ element }}</td>
+			{% endfor %}
+		</tr>
+		{% endfor %}
 	</tbody>
 
 </table>
 
 <script>
 $(document).ready(function(){
-  $("#myInput").on("keyup", function() {
+  $("#sortedSearch").on("keyup", function() {
     var value = $(this).val().toLowerCase();
-    $("#allocations tr").filter(function() {
+    $("#sortedGrid tr").filter(function() {
+      $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+    });
+  });
+});
+
+$(document).ready(function(){
+  $("#extrasSearch").on("keyup", function() {
+    var value = $(this).val().toLowerCase();
+    $("#extrasGrid tr").filter(function() {
       $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
     });
   });

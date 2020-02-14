@@ -7,10 +7,7 @@ New School
 {% block body %}
 <div class="d-flex justify-content-center">
 	<form action="/add_committee" method="post" enctype="multipart/form-data" class="col-md-6">
-		<div class="custom-file">
-			<input type="file" name="file" class="custom-file-input" id='file-input'>
-			<label class="custom-file-label" for="file-input">Choose file</label>
-		</div>
+		<input type="file" name="file" class="form-control" id='file-input'>
 		<input type="submit" class="btn btn-primary col-md-3 mt-3" value="Upload">
 	</form>	
 </div>

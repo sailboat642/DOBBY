@@ -119,8 +119,12 @@ def populate_school():
         portfolios = event_session.query(Portfolio).join(Portfolio.student).filter(Student.school_id == school_id).all()
 
         for portfolio in portfolios:
-            student_name = request.form.get(portfolio.name)
-            portfolio.student.name = student_name
+            student_name = request.form.get(str(portfolio.id))
+            if student_name == "":
+                portfolio.student.name = None
+            else:
+                portfolio.student.name = student_name
+
             event_session.commit()
 
         event_session.close()
@@ -128,7 +132,7 @@ def populate_school():
         return redirect("/view")
     else:
         school_id = request.args.get("school")
-        portfolios = event_session.query(Portfolio).join(Portfolio.student).filter(Student.school_id == school_id).all()
+        portfolios = event_session.query(Portfolio.id, Portfolio.name, Committee.name).join(Portfolio.student, Portfolio.committee).filter(Student.school_id == school_id).all()
         event_session.close()
         return render_template("add_students.html", portfolios=portfolios, school_id=school_id)
 
@@ -309,9 +313,16 @@ def view():
     session = EventSession()
 
     # fixes need to query: join multiple tables
-    rows = session.query(Portfolio.rank, Portfolio.name, Committee.name, Student.name, School.name, School.grade).join(Portfolio.committee, Portfolio.student, Student.school).filter(Portfolio.student != None).order_by(School.id).all()
+    sorted_portfolios = session.query(Portfolio.rank, Portfolio.name, Committee.name, Student.name, School.name, School.grade).join(Portfolio.committee, Portfolio.student, Student.school).filter(Portfolio.student != None).order_by(School.id).all()
+    extra_portfolios  = session.query(Portfolio.rank, Portfolio.name, Committee.name).join(Portfolio.committee).filter(Portfolio.student == None).order_by(Portfolio.committee_id).all()
+    schools = session.query(School).all()
+    unsorted_schools = []
+    for school in schools:
+        portfolio = session.query(Portfolio).join(Portfolio.student, Student.school).filter(School.id == school.id).first()
+        if portfolio == None:
+            unsorted_schools.append([School.id, School.name, School.grade, School.delegation_size])
     session.close()
-    return render_template("view.html", rows=rows)
+    return render_template("view.html", sorted_portfolios=sorted_portfolios, extra_portfolios=extra_portfolios, schools=unsorted_schools)
 
 
 @app.route("/sort_all", methods=["POST"])
@@ -330,12 +341,41 @@ def sort_all():
             student = event_session.query(Student).filter(Student.school_id == school.id).order_by(Student.id).first()
             portfolio = event_session.query(Portfolio).filter(Portfolio.student_id == None, Portfolio.rank == 1).first()
             portfolio.student_id = student.id
-            event_session.commit()
 
-        # what to do next
-        # give portfolios grade wise
         students = event_session.query(Student.id, Student.name, School.id, School.grade).join(Student.school).order_by(School.grade).all()
         portfolios = event_session.query(Portfolio).filter(Portfolio.student == None).order_by(Portfolio.rank).all()
+        if len(portfolios) < len(students):
+            n = len(students) - len(portfolios)
+            return apology(f'Need {n} more portfolios')
+
+        event_session.commit()
+
+        for i in range(len(students)):
+            query = event_session.query(Portfolio).filter(Portfolio.student_id == students[i][0]).first()
+            if not query:
+                portfolios[i].student_id = students[i][0]
+            
+        event_session.commit()
+
+        event_session.close()
+        return redirect("/view")
+
+
+@app.route("/sort_new", methods=["POST"])
+@database_access
+def sort_new():
+    if request.method == "POST":
+        event_session = EventSession()
+
+        students = event_session.query(Student.id, Student.name, School.id, School.grade).join(Student.school).order_by(School.grade).all()
+        portfolios = event_session.query(Portfolio).order_by(Portfolio.rank).all()
+
+        if len(portfolios) < len(students):
+            n = len(students) - len(portfolios)
+            return apology(f'Need {n} more portfolios')
+
+        portfolios = event_session.query(Portfolio).filter(Portfolio.student == None).order_by(Portfolio.rank).all()
+
         for i in range(len(students)):
             query = event_session.query(Portfolio).filter(Portfolio.student_id == students[i][0]).first()
             if not query:

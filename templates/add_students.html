@@ -12,13 +12,12 @@ Add Students
         <table>
     		{% for portfolio in portfolios %}
        		<div class='input-group mb-2'>
-    			<div class="input-group-prepend"><span class="input-group-text">{{ portfolio.name }}</span></div>
-    			<input class="form-control" autocomplete="off"  name="{{ portfolio.name }}" placeholder="Student Name" type="text">
+    			<div class="input-group-prepend"><span class="input-group-text">{{ portfolio[2] }}, {{ portfolio[1] }}</span></div>
+    			<input class="form-control" autocomplete="off"  name="{{ portfolio[0] }}" placeholder="Student Name" type="text">
 		    </div>
 		    {% endfor %}
 	    </table>
 	    <button type="submit" class="btn btn-primary col-md-3">Submit</button>
-		<input type="hidden" value="{{ school_id }}" name="school_id">
     </form>
 </div>
 {% endblock %}

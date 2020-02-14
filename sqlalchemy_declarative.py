@@ -67,18 +67,15 @@ class Portfolio(Base):
     name = Column(String(255), nullable=False)
     committee_id = Column(Integer, ForeignKey("committees.id"), nullable=False)
     student_id = Column(Integer, ForeignKey("students.id"))
-    school_id = Column(Integer, ForeignKey("schools.id"))
     rank = Column(Integer, nullable=False)
 
     committee = relationship("Committee", back_populates="portfolios")
     student = relationship("Student", back_populates="portfolio")
-    school = relationship("School", back_populates="portfolios")
 
 
 
 Committee.portfolios = relationship("Portfolio", order_by=Portfolio.id, back_populates="committee")
 
-School.portfolios = relationship("Portfolio", order_by=Portfolio.id, back_populates="school")
 School.students = relationship("Student", order_by=Student.id, back_populates="school")
 
 Student.portfolio = relationship("Portfolio", back_populates="student")
